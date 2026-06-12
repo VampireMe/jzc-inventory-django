@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Django / local runtime
+*.log
+*.pot
+*.mo
+db.sqlite3
+db.sqlite3-journal
+*.db
+media/
+staticfiles/
+local_settings.py
+
+# Tool caches
+.pytest_cache/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.tox/
+.nox/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.hypothesis/
+.cache/
+.ipynb_checkpoints/
+
+# Build / package output
+build/
+dist/
+site/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+*.egg
+MANIFEST
+
+# Frontend / vendor
+node_modules/
+vendor/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+
+# Keep migrations in version control; ignore only generated cache beneath them.
+**/migrations/__pycache__/
+.jz-handoff/
+.jz-workflow-state.json
+.jz-*.json

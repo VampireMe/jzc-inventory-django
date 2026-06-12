@@ -1,0 +1,524 @@
+[
+{
+  "model": "auth.user",
+  "pk": 1,
+  "fields": {
+    "password": "pbkdf2_sha256$216000$SMDbu9vKcwmC$vVKeEUA07G0w31tt5mGtDVv4b5jXiGg6GgcIJYFd7sc=",
+    "last_login": null,
+    "is_superuser": true,
+    "username": "admin_ops",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": true,
+    "is_active": true,
+    "date_joined": "2026-06-10T06:41:40.157Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 2,
+  "fields": {
+    "password": "pbkdf2_sha256$216000$eZc9ssLLwYh6$J6HXLj9CmEgtDN+pBfwXpLOa4JrTVn0vf5VdmZ3DpNk=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "north_manager",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-06-10T06:41:40.175Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 3,
+  "fields": {
+    "password": "pbkdf2_sha256$216000$by7x2kB4MXl7$wUjgdaaTbufkQXDRQyRo9WxmHfQhSsanmNFBMHzGhvg=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "north_staff",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-06-10T06:41:40.193Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 4,
+  "fields": {
+    "password": "pbkdf2_sha256$216000$J5wHLuJKc8H5$SPQxFaBUPrbdSby4+p1TrN+P5tctHuqf2fAsNULsy4g=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "south_manager",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-06-10T06:41:40.210Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 5,
+  "fields": {
+    "password": "pbkdf2_sha256$216000$EFJjuxiJ5K0x$kiYRWC2lxFcqqUBi2Ik+nNZHz+pvC5T9JD0ZvSJt6L4=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "ops_hold",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-06-10T06:41:40.228Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "auth.user",
+  "pk": 6,
+  "fields": {
+    "password": "pbkdf2_sha256$216000$hGOazM0ah7AM$oQzhXKHupy+IRVQ5K9/S335qntaXtKD3mxBNUVPDJzA=",
+    "last_login": null,
+    "is_superuser": false,
+    "username": "legacy_user",
+    "first_name": "",
+    "last_name": "",
+    "email": "",
+    "is_staff": false,
+    "is_active": true,
+    "date_joined": "2026-06-10T06:41:40.245Z",
+    "groups": [],
+    "user_permissions": []
+  }
+},
+{
+  "model": "access.role",
+  "pk": 1,
+  "fields": {
+    "name": "admin",
+    "description": "Platform owner",
+    "created_at": "2026-06-10T06:41:40.138Z",
+    "updated_at": "2026-06-10T06:41:40.138Z"
+  }
+},
+{
+  "model": "access.role",
+  "pk": 2,
+  "fields": {
+    "name": "manager",
+    "description": "Department manager",
+    "created_at": "2026-06-10T06:41:40.139Z",
+    "updated_at": "2026-06-10T06:41:40.139Z"
+  }
+},
+{
+  "model": "access.role",
+  "pk": 3,
+  "fields": {
+    "name": "staff",
+    "description": "Stock operator",
+    "created_at": "2026-06-10T06:41:40.139Z",
+    "updated_at": "2026-06-10T06:41:40.139Z"
+  }
+},
+{
+  "model": "access.department",
+  "pk": 1,
+  "fields": {
+    "name": "North Hub",
+    "code": "north",
+    "is_active": true,
+    "created_at": "2026-06-10T06:41:40.139Z",
+    "updated_at": "2026-06-10T06:41:40.139Z"
+  }
+},
+{
+  "model": "access.department",
+  "pk": 2,
+  "fields": {
+    "name": "South Hub",
+    "code": "south",
+    "is_active": true,
+    "created_at": "2026-06-10T06:41:40.139Z",
+    "updated_at": "2026-06-10T06:41:40.139Z"
+  }
+},
+{
+  "model": "access.department",
+  "pk": 3,
+  "fields": {
+    "name": "Central Reserve",
+    "code": "central",
+    "is_active": true,
+    "created_at": "2026-06-10T06:41:40.140Z",
+    "updated_at": "2026-06-10T06:41:40.140Z"
+  }
+},
+{
+  "model": "access.userrole",
+  "pk": 1,
+  "fields": {
+    "user": 1,
+    "role": 1,
+    "department": 1,
+    "status": "active",
+    "created_by": 1,
+    "approved_by": 1,
+    "deleted_at": null,
+    "created_at": "2026-06-10T06:41:40.246Z",
+    "updated_at": "2026-06-10T06:41:40.246Z"
+  }
+},
+{
+  "model": "access.userrole",
+  "pk": 2,
+  "fields": {
+    "user": 2,
+    "role": 2,
+    "department": 1,
+    "status": "active",
+    "created_by": 1,
+    "approved_by": 1,
+    "deleted_at": null,
+    "created_at": "2026-06-10T06:41:40.246Z",
+    "updated_at": "2026-06-10T06:41:40.246Z"
+  }
+},
+{
+  "model": "access.userrole",
+  "pk": 3,
+  "fields": {
+    "user": 3,
+    "role": 3,
+    "department": 1,
+    "status": "active",
+    "created_by": 1,
+    "approved_by": 1,
+    "deleted_at": null,
+    "created_at": "2026-06-10T06:41:40.247Z",
+    "updated_at": "2026-06-10T06:41:40.247Z"
+  }
+},
+{
+  "model": "access.userrole",
+  "pk": 4,
+  "fields": {
+    "user": 4,
+    "role": 2,
+    "department": 2,
+    "status": "active",
+    "created_by": 1,
+    "approved_by": 1,
+    "deleted_at": null,
+    "created_at": "2026-06-10T06:41:40.247Z",
+    "updated_at": "2026-06-10T06:41:40.247Z"
+  }
+},
+{
+  "model": "access.userrole",
+  "pk": 5,
+  "fields": {
+    "user": 5,
+    "role": 3,
+    "department": 2,
+    "status": "suspended",
+    "created_by": 1,
+    "approved_by": 1,
+    "deleted_at": null,
+    "created_at": "2026-06-10T06:41:40.247Z",
+    "updated_at": "2026-06-10T06:41:40.247Z"
+  }
+},
+{
+  "model": "access.userrole",
+  "pk": 6,
+  "fields": {
+    "user": 6,
+    "role": 3,
+    "department": 3,
+    "status": "revoked",
+    "created_by": 1,
+    "approved_by": 1,
+    "deleted_at": "2026-06-10T06:41:40.248Z",
+    "created_at": "2026-06-10T06:41:40.248Z",
+    "updated_at": "2026-06-10T06:41:40.248Z"
+  }
+},
+{
+  "model": "inventory.stock",
+  "pk": 1,
+  "fields": {
+    "name": "North Bolts",
+    "department": 1,
+    "quantity": 120,
+    "created_by": 2,
+    "updated_at": "2026-06-10T06:41:40.248Z",
+    "is_deleted": false
+  }
+},
+{
+  "model": "inventory.stock",
+  "pk": 2,
+  "fields": {
+    "name": "North Cables",
+    "department": 1,
+    "quantity": 64,
+    "created_by": 3,
+    "updated_at": "2026-06-10T06:41:40.249Z",
+    "is_deleted": false
+  }
+},
+{
+  "model": "inventory.stock",
+  "pk": 3,
+  "fields": {
+    "name": "South Bearings",
+    "department": 2,
+    "quantity": 88,
+    "created_by": 4,
+    "updated_at": "2026-06-10T06:41:40.249Z",
+    "is_deleted": false
+  }
+},
+{
+  "model": "inventory.stock",
+  "pk": 4,
+  "fields": {
+    "name": "South Filters",
+    "department": 2,
+    "quantity": 42,
+    "created_by": 4,
+    "updated_at": "2026-06-10T06:41:40.249Z",
+    "is_deleted": false
+  }
+},
+{
+  "model": "inventory.stock",
+  "pk": 5,
+  "fields": {
+    "name": "Central Valves",
+    "department": 3,
+    "quantity": 15,
+    "created_by": 1,
+    "updated_at": "2026-06-10T06:41:40.250Z",
+    "is_deleted": true
+  }
+},
+{
+  "model": "transactions.supplier",
+  "pk": 1,
+  "fields": {
+    "name": "North Supply Co",
+    "department": 1,
+    "phone": "1111111111",
+    "address": "101 North Street",
+    "email": "north-supply@northhub.local",
+    "gstin": "11AAAAA1111A1Z1",
+    "created_by": 2,
+    "updated_at": "2026-06-10T06:41:40.250Z",
+    "is_deleted": false
+  }
+},
+{
+  "model": "transactions.supplier",
+  "pk": 2,
+  "fields": {
+    "name": "South Parts Ltd",
+    "department": 2,
+    "phone": "2222222222",
+    "address": "202 South Street",
+    "email": "south-parts@southhub.local",
+    "gstin": "22BBBBB2222B2Z2",
+    "created_by": 4,
+    "updated_at": "2026-06-10T06:41:40.250Z",
+    "is_deleted": false
+  }
+},
+{
+  "model": "transactions.purchasebill",
+  "pk": 1,
+  "fields": {
+    "time": "2026-05-14T09:30:00Z",
+    "department": 1,
+    "supplier": 1,
+    "created_by": 2
+  }
+},
+{
+  "model": "transactions.purchasebill",
+  "pk": 2,
+  "fields": {
+    "time": "2026-05-20T14:15:00Z",
+    "department": 2,
+    "supplier": 2,
+    "created_by": 4
+  }
+},
+{
+  "model": "transactions.purchaseitem",
+  "pk": 1,
+  "fields": {
+    "billno": 1,
+    "stock": 1,
+    "quantity": 20,
+    "perprice": 14,
+    "totalprice": 280
+  }
+},
+{
+  "model": "transactions.purchaseitem",
+  "pk": 2,
+  "fields": {
+    "billno": 1,
+    "stock": 2,
+    "quantity": 12,
+    "perprice": 9,
+    "totalprice": 108
+  }
+},
+{
+  "model": "transactions.purchaseitem",
+  "pk": 3,
+  "fields": {
+    "billno": 2,
+    "stock": 3,
+    "quantity": 16,
+    "perprice": 11,
+    "totalprice": 176
+  }
+},
+{
+  "model": "transactions.purchasebilldetails",
+  "pk": 1,
+  "fields": {
+    "billno": 1,
+    "eway": null,
+    "veh": null,
+    "destination": null,
+    "po": null,
+    "cgst": null,
+    "sgst": null,
+    "igst": null,
+    "cess": null,
+    "tcs": null,
+    "total": 388
+  }
+},
+{
+  "model": "transactions.purchasebilldetails",
+  "pk": 2,
+  "fields": {
+    "billno": 2,
+    "eway": null,
+    "veh": null,
+    "destination": null,
+    "po": null,
+    "cgst": null,
+    "sgst": null,
+    "igst": null,
+    "cess": null,
+    "tcs": null,
+    "total": 176
+  }
+},
+{
+  "model": "transactions.salebill",
+  "pk": 1,
+  "fields": {
+    "time": "2026-05-18T11:45:00Z",
+    "department": 1,
+    "name": "Harbor Retail",
+    "phone": "3333333333",
+    "address": "3 Market Road",
+    "email": "harbor@retail.local",
+    "gstin": "33CCCCC3333C3Z3",
+    "created_by": 3
+  }
+},
+{
+  "model": "transactions.salebill",
+  "pk": 2,
+  "fields": {
+    "time": "2026-05-24T16:00:00Z",
+    "department": 2,
+    "name": "Delta Stores",
+    "phone": "4444444444",
+    "address": "4 Delta Road",
+    "email": "delta@stores.local",
+    "gstin": "44DDDDD4444D4Z4",
+    "created_by": 4
+  }
+},
+{
+  "model": "transactions.saleitem",
+  "pk": 1,
+  "fields": {
+    "billno": 1,
+    "stock": 1,
+    "quantity": 8,
+    "perprice": 22,
+    "totalprice": 176
+  }
+},
+{
+  "model": "transactions.saleitem",
+  "pk": 2,
+  "fields": {
+    "billno": 2,
+    "stock": 3,
+    "quantity": 10,
+    "perprice": 18,
+    "totalprice": 180
+  }
+},
+{
+  "model": "transactions.salebilldetails",
+  "pk": 1,
+  "fields": {
+    "billno": 1,
+    "eway": null,
+    "veh": null,
+    "destination": null,
+    "po": null,
+    "cgst": null,
+    "sgst": null,
+    "igst": null,
+    "cess": null,
+    "tcs": null,
+    "total": 176
+  }
+},
+{
+  "model": "transactions.salebilldetails",
+  "pk": 2,
+  "fields": {
+    "billno": 2,
+    "eway": null,
+    "veh": null,
+    "destination": null,
+    "po": null,
+    "cgst": null,
+    "sgst": null,
+    "igst": null,
+    "cess": null,
+    "tcs": null,
+    "total": 180
+  }
+}
+]

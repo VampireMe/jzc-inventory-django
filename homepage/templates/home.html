@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+
+{% block title %} Home {% endblock title %}
+
+
+{% block content %}
+
+    <div style="color:#ea2088; font-style: bold; font-size: 3rem; border-bottom: 1px solid #fff">Welcome, {{ request.user.username }}</div>
+    <div class="scope-strip">
+        <span class="status-badge status-{{ user_membership.status }}">{{ user_membership.get_status_display }}</span>
+        <span class="scope-chip">{{ user_membership.role.get_name_display }}</span>
+        <span class="scope-chip">{{ summary.department }}</span>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3">
+            <div class="dashboard-card">
+                <div class="dashboard-label">Visible Stock Types</div>
+                <div class="dashboard-value" id="stock-types">{{ summary.stock_types }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card">
+                <div class="dashboard-label">Stock Units</div>
+                <div class="dashboard-value" id="stock-units">{{ summary.stock_units }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card">
+                <div class="dashboard-label">Purchase Bills</div>
+                <div class="dashboard-value" id="purchase-count">{{ summary.purchase_count }}</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="dashboard-card">
+                <div class="dashboard-label">Sales Bills</div>
+                <div class="dashboard-value" id="sale-count">{{ summary.sale_count }}</div>
+            </div>
+        </div>
+    </div>
+
+    <br>
+
+    <div id="container" style="position: relative; height:45vh; border: 2mm ridge #4F102B; border-radius: 30px;" class="align-middle table-bordered">
+        <canvas id="inventory-chart"></canvas>
+    </div>
+
+    <br>
+
+    <div class="row">
+        <div class="col-md-6">
+            <a href="{% url 'select-supplier' %}" class="btn ghost-blue btn-lg btn-block btn-huge">New Incoming Stock</a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'new-sale' %}" class="btn ghost-blue btn-lg btn-block btn-huge">New Outgoing Stock</a>
+        </div>
+    </div>
+
+    <br>
+
+    <div class="content-section">
+        <div class="row">
+
+            <div class="col-md-6">
+                <div style="color:#ea2088; font-style: bold; font-size: 1.3em; border-bottom: 2px solid #fff">Most Recent Sales</div><br>
+                {% for item in sales %}
+                    {% if not forloop.first %}
+                        <br><div style="border-bottom: 0.5px solid #fff"></div><br>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-md-9">
+                            Bill No: {{ item.billno }} <br>
+                            Purchased by {{ item.name }} <br>
+                            <small>{{ item.time.date }} / {{ item.department.name }}</small>
+                        </div>
+                        <div class="col-md-2"> {{ item.get_total_price }} <br> <br> <a href="{% url 'sale-bill' item.billno %}">View Bill</a> </div>
+                    </div>
+                {% empty %}
+                    <div>No visible sales yet.</div>
+                {% endfor %}
+            </div>
+
+            <div class="col-md-6">
+                <div style="color:#ea2088; font-style: bold; font-size: 1.3em; border-bottom: 2px solid #fff">Most Recent Purchases</div><br>
+                {% for item in purchases %}
+                    {% if not forloop.first %}
+                        <br><div style="border-bottom: 0.5px solid #fff"></div><br>
+                    {% endif %}
+                    <div class="row">
+                        <div class="col-md-9">
+                            Bill No: {{ item.billno }} <br>
+                            Purchased by {{ item.supplier.name }} <br>
+                            <small>{{ item.time.date }} / {{ item.department.name }}</small>
+                        </div>
+                        <div class="col-md-2"> {{ item.get_total_price }} <br> <br> <a href="{% url 'purchase-bill' item.billno %}">View Bill</a> </div>
+                    </div>
+                {% empty %}
+                    <div>No visible purchases yet.</div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </div>
+
+    {% if user_can_manage_roles %}
+        <br>
+        <div class="content-section">
+            <div style="color:#ea2088; font-style: bold; font-size: 1.8em; border-bottom: 2px solid #fff">Role And Department Workbench</div>
+            <br>
+            <table class="table table-css">
+                <thead class="thead-inverse align-middle">
+                    <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in memberships %}
+                        <tr>
+                            <td>{{ member.user.username }}</td>
+                            <td>{{ member.role.get_name_display }}</td>
+                            <td>
+                                <form method="post" action="{% url 'change_department' member.pk %}" class="inline-form">
+                                    {% csrf_token %}
+                                    <select name="department" class="form-control textinput">
+                                        {% for department in departments %}
+                                            <option value="{{ department.pk }}" {% if department.pk == member.department.pk %}selected{% endif %}>{{ department.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn ghost-button btn-sm">Move</button>
+                                </form>
+                            </td>
+                            <td><span class="status-badge status-{{ member.status }}">{{ member.get_status_display }}</span></td>
+                            <td>
+                                {% if member.status == "active" %}
+                                    <form method="post" action="{% url 'grant_role' member.pk %}" class="inline-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn ghost-pink btn-sm">Suspend Access</button>
+                                    </form>
+                                {% elif member.status == "suspended" %}
+                                    <form method="post" action="{% url 'revoke_role' member.pk %}" class="inline-form">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn ghost-red btn-sm">Revoke Access</button>
+                                    </form>
+                                {% else %}
+                                    <span style="color:#909494;">Locked</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+
+    <script src="{% static 'js/Chart.min.js' %}"></script>
+    <script>
+        Chart.defaults.global.defaultFontColor = '#fff';
+        var initialPayload = {{ chart_payload|safe }};
+
+        var inventoryChartConfig = {
+            type: 'bar',
+            data: {
+                datasets: [{
+                    backgroundColor: '#ea2088',
+                    label: 'Stock in Inventory',
+                    data: initialPayload.data,
+                }],
+                labels: initialPayload.labels
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+            },
+        };
+
+        function updateSummary(payload) {
+            document.getElementById('stock-types').innerText = payload.summary.stock_types;
+            document.getElementById('stock-units').innerText = payload.summary.stock_units;
+            document.getElementById('purchase-count').innerText = payload.summary.purchase_count;
+            document.getElementById('sale-count').innerText = payload.summary.sale_count;
+        }
+
+        window.onload = function() {
+            var ctx = document.getElementById('inventory-chart').getContext('2d');
+            window.inventoryChart = new Chart(ctx, inventoryChartConfig);
+            fetch("{% url 'department_chart' %}")
+                .then(function(response) { return response.json(); })
+                .then(function(body) {
+                    window.inventoryChart.data.labels = body.data.labels;
+                    window.inventoryChart.data.datasets[0].data = body.data.data;
+                    window.inventoryChart.update();
+                    updateSummary(body.data);
+                });
+        };
+
+    </script>
+
+{% endblock content %}
