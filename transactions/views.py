@@ -393,19 +393,21 @@ class PurchaseBillView(View):
         if form.is_valid():
             billdetailsobj = PurchaseBillDetails.objects.get(billno=billno)
 
-            billdetailsobj.eway = request.POST.get("eway")
-            billdetailsobj.veh = request.POST.get("veh")
-            billdetailsobj.destination = request.POST.get("destination")
-            billdetailsobj.po = request.POST.get("po")
-            billdetailsobj.cgst = request.POST.get("cgst")
-            billdetailsobj.sgst = request.POST.get("sgst")
-            billdetailsobj.igst = request.POST.get("igst")
-            billdetailsobj.cess = request.POST.get("cess")
-            billdetailsobj.tcs = request.POST.get("tcs")
-            billdetailsobj.total = request.POST.get("total")
+            billdetailsobj.eway = form.cleaned_data["eway"]
+            billdetailsobj.veh = form.cleaned_data["veh"]
+            billdetailsobj.destination = form.cleaned_data["destination"]
+            billdetailsobj.po = form.cleaned_data["po"]
+            billdetailsobj.cgst = form.cleaned_data["cgst"]
+            billdetailsobj.sgst = form.cleaned_data["sgst"]
+            billdetailsobj.igst = form.cleaned_data["igst"]
+            billdetailsobj.cess = form.cleaned_data["cess"]
+            billdetailsobj.tcs = form.cleaned_data["tcs"]
+            billdetailsobj.total = form.cleaned_data["total"]
 
             billdetailsobj.save()
             messages.success(request, "Bill details have been modified successfully")
+        else:
+            messages.error(request, "Bill details could not be saved. Please correct the errors.")
         context = {
             "bill": bill,
             "items": PurchaseItem.objects.filter(billno=billno),
@@ -443,19 +445,21 @@ class SaleBillView(View):
         if form.is_valid():
             billdetailsobj = SaleBillDetails.objects.get(billno=billno)
 
-            billdetailsobj.eway = request.POST.get("eway")
-            billdetailsobj.veh = request.POST.get("veh")
-            billdetailsobj.destination = request.POST.get("destination")
-            billdetailsobj.po = request.POST.get("po")
-            billdetailsobj.cgst = request.POST.get("cgst")
-            billdetailsobj.sgst = request.POST.get("sgst")
-            billdetailsobj.igst = request.POST.get("igst")
-            billdetailsobj.cess = request.POST.get("cess")
-            billdetailsobj.tcs = request.POST.get("tcs")
-            billdetailsobj.total = request.POST.get("total")
+            billdetailsobj.eway = form.cleaned_data["eway"]
+            billdetailsobj.veh = form.cleaned_data["veh"]
+            billdetailsobj.destination = form.cleaned_data["destination"]
+            billdetailsobj.po = form.cleaned_data["po"]
+            billdetailsobj.cgst = form.cleaned_data["cgst"]
+            billdetailsobj.sgst = form.cleaned_data["sgst"]
+            billdetailsobj.igst = form.cleaned_data["igst"]
+            billdetailsobj.cess = form.cleaned_data["cess"]
+            billdetailsobj.tcs = form.cleaned_data["tcs"]
+            billdetailsobj.total = form.cleaned_data["total"]
 
             billdetailsobj.save()
             messages.success(request, "Bill details have been modified successfully")
+        else:
+            messages.error(request, "Bill details could not be saved. Please correct the errors.")
         context = {
             "bill": bill,
             "items": SaleItem.objects.filter(billno=billno),
