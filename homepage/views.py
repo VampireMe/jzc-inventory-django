@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -12,6 +13,8 @@ from access.models import Department, Role, UserRole
 from access.services import department_chart_payload, scope_queryset
 from inventory.models import Stock
 from transactions.models import PurchaseBill, SaleBill
+
+logger = logging.getLogger(__name__)
 
 
 @method_decorator(role_required(Role.ADMIN, Role.MANAGER, Role.STAFF), name="dispatch")
@@ -80,7 +83,28 @@ class RoleTransitionView(View):
         try:
             membership.transition(actor=request.user, action=self.action)
         except ValidationError:
-            return JsonResponse({"code": 1, "message": "illegal transition"}, status=409)
+            logger.warning(
+                "Illegal transition rejected: actor=%s target_user=%s "
+                "current_status=%s action=%s",
+                request.user,
+                membership.user,
+                membership.status,
+                self.action,
+            )
+            return JsonResponse(
+                {
+                    "code": 1,
+                    "message": "illegal transition",
+                    "detail": {
+                        "target_user": membership.user.username,
+                        "current_status": membership.status,
+                        "action": self.action,
+                        "role": membership.role.name,
+                        "department": membership.department.code,
+                    },
+                },
+                status=409,
+            )
         except PermissionDenied:
             return JsonResponse({"code": 1, "message": "permission denied"}, status=403)
         messages.success(request, "Updated %s to %s." % (membership.user.username, membership.status))
