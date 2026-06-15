@@ -80,7 +80,19 @@ class RoleTransitionView(View):
         try:
             membership.transition(actor=request.user, action=self.action)
         except ValidationError:
-            return JsonResponse({"code": 1, "message": "illegal transition"}, status=409)
+            return JsonResponse(
+                {
+                    "code": 1,
+                    "message": "illegal transition",
+                    "detail": {
+                        "actor": request.user.username,
+                        "current_status": membership.status,
+                        "action": self.action,
+                        "target_user": membership.user.username,
+                    },
+                },
+                status=409,
+            )
         except PermissionDenied:
             return JsonResponse({"code": 1, "message": "permission denied"}, status=403)
         messages.success(request, "Updated %s to %s." % (membership.user.username, membership.status))

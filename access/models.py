@@ -1,7 +1,11 @@
+import logging
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import models, transaction
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 
 class Department(models.Model):
@@ -131,6 +135,13 @@ class UserRole(models.Model):
         }
         next_status = transition_map.get((self.status, action))
         if next_status is None:
+            logger.warning(
+                "Illegal role transition: actor=%s, current_status=%s, action=%s, target_user=%s",
+                actor.username,
+                self.status,
+                action,
+                self.user.username,
+            )
             raise ValidationError("Illegal transition requested.")
 
         with transaction.atomic():
