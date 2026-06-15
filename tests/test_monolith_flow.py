@@ -208,3 +208,85 @@ class MonolithFlowTests(TestCase):
         self.assertEqual(delete_response.status_code, 302)
         self.north_stock.refresh_from_db()
         self.assertEqual(self.north_stock.quantity, 20)
+
+    # ── Sale stock-validation tests ──────────────────────────────────────
+
+    def _sale_post(self, items, customer=None):
+        """Build POST payload for SaleCreateView.
+
+        ``items`` is a list of (stock_pk, quantity, perprice) tuples.
+        """
+        data = {
+            "form-TOTAL_FORMS": str(len(items)),
+            "form-INITIAL_FORMS": "0",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+            "name": (customer or {}).get("name", "Test Customer"),
+            "phone": (customer or {}).get("phone", "9999999999"),
+            "address": (customer or {}).get("address", "addr"),
+            "email": (customer or {}).get("email", "a@b.test"),
+            "gstin": (customer or {}).get("gstin", ""),
+        }
+        for idx, (stock_pk, qty, price) in enumerate(items):
+            data[f"form-{idx}-stock"] = str(stock_pk)
+            data[f"form-{idx}-quantity"] = str(qty)
+            data[f"form-{idx}-perprice"] = str(price)
+        return data
+
+    def test_sale_succeeds_and_decrements_stock(self):
+        self.client.force_login(self.manager_user)
+        before = self.north_stock.quantity  # 25
+
+        resp = self.client.post(reverse("new-sale"), self._sale_post([(self.north_stock.pk, 10, 5)]))
+        self.assertEqual(resp.status_code, 302)  # redirect on success
+
+        self.north_stock.refresh_from_db()
+        self.assertEqual(self.north_stock.quantity, before - 10)
+
+        # Exactly one SaleBill + one SaleItem written
+        self.assertEqual(SaleBill.objects.filter(department=self.north, name="Test Customer").count(), 1)
+
+    def test_sale_rejected_when_stock_insufficient(self):
+        self.client.force_login(self.manager_user)
+        before = self.north_stock.quantity  # 25
+
+        resp = self.client.post(reverse("new-sale"), self._sale_post([(self.north_stock.pk, 30, 5)]))
+        self.assertEqual(resp.status_code, 200)  # re-rendered form
+        self.assertContains(resp, "Insufficient stock")
+
+        # Stock must be untouched
+        self.north_stock.refresh_from_db()
+        self.assertEqual(self.north_stock.quantity, before)
+
+        # No partial writes
+        self.assertFalse(SaleBill.objects.filter(name="Test Customer").exists())
+
+    def test_sale_rejected_when_same_stock_across_rows_exceeds_available(self):
+        self.client.force_login(self.manager_user)
+        before = self.north_stock.quantity  # 25
+
+        # Two rows requesting 15 each = 30 total, but only 25 available
+        resp = self.client.post(
+            reverse("new-sale"),
+            self._sale_post([
+                (self.north_stock.pk, 15, 5),
+                (self.north_stock.pk, 15, 5),
+            ]),
+        )
+        self.assertEqual(resp.status_code, 200)
+        self.assertContains(resp, "Insufficient stock")
+
+        self.north_stock.refresh_from_db()
+        self.assertEqual(self.north_stock.quantity, before)
+        self.assertFalse(SaleBill.objects.filter(name="Test Customer").exists())
+
+    def test_sale_cannot_use_other_department_stock(self):
+        self.client.force_login(self.manager_user)  # north department
+
+        resp = self.client.post(reverse("new-sale"), self._sale_post([(self.south_stock.pk, 1, 5)]))
+        # Either the form rejects the stock pk (not in queryset) or returns 200 with errors
+        self.assertEqual(resp.status_code, 200)
+
+        self.south_stock.refresh_from_db()
+        self.assertEqual(self.south_stock.quantity, 26)  # untouched
+        self.assertFalse(SaleBill.objects.filter(name="Test Customer").exists())

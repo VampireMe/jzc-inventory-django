@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -306,28 +306,69 @@ class SaleCreateView(View):
         form = SaleForm(request.POST)
         formset = self.build_formset(request, request.POST)
         if form.is_valid() and formset.is_valid():
-            with transaction.atomic():
-                billobj = form.save(commit=False)
-                billobj.department = request.user_membership.department
-                billobj.created_by = request.user
-                billobj.save()
+            try:
+                with transaction.atomic():
+                    # Lock stock rows to prevent concurrent overselling
+                    visible_stocks = department_stocks(request)
+                    locked_stocks = Stock.objects.select_for_update().filter(
+                        pk__in=visible_stocks.values_list("pk", flat=True),
+                        is_deleted=False,
+                    )
+                    stock_map = {s.pk: s for s in locked_stocks}
 
-                billdetailsobj = SaleBillDetails.objects.create(billno=billobj)
+                    # Pre-check: aggregate demand per stock and validate
+                    allocated = {}  # {stock_pk: quantity already claimed by prior rows}
+                    for item_form in formset:
+                        cd = item_form.cleaned_data
+                        if not cd or cd.get("DELETE"):
+                            continue
+                        stock_id = cd.get("stock")
+                        qty = cd.get("quantity", 0)
+                        if stock_id is None or qty <= 0:
+                            continue
+                        sid = stock_id.pk if hasattr(stock_id, "pk") else stock_id
+                        prev = allocated.get(sid, 0)
+                        if sid in stock_map:
+                            avail = stock_map[sid].quantity
+                            if prev + qty > avail:
+                                item_form.add_error(
+                                    "stock",
+                                    "Insufficient stock. Available: {}, already allocated to previous rows: {}".format(
+                                        avail, prev
+                                    ),
+                                )
+                        allocated[sid] = prev + qty
 
-                for item_form in formset:
-                    billitem = item_form.save(commit=False)
-                    billitem.billno = billobj
-                    stock = get_object_or_404(department_stocks(request), pk=billitem.stock.pk)
-                    billitem.totalprice = billitem.perprice * billitem.quantity
-                    stock.quantity -= billitem.quantity
-                    stock.save(update_fields=["quantity", "updated_at"])
-                    billdetailsobj.total += billitem.totalprice
-                    billitem.save()
+                    if any(f.errors for f in formset):
+                        raise ValidationError("Stock insufficient")
 
-                billdetailsobj.save()
+                    # All stock checks passed — write to database
+                    billobj = form.save(commit=False)
+                    billobj.department = request.user_membership.department
+                    billobj.created_by = request.user
+                    billobj.save()
 
-            messages.success(request, "Sold items have been registered successfully")
-            return redirect("sale-bill", billno=billobj.billno)
+                    billdetailsobj = SaleBillDetails.objects.create(billno=billobj)
+
+                    for item_form in formset:
+                        cd = item_form.cleaned_data
+                        if not cd or cd.get("DELETE"):
+                            continue
+                        billitem = item_form.save(commit=False)
+                        billitem.billno = billobj
+                        stock = stock_map[billitem.stock.pk]
+                        billitem.totalprice = billitem.perprice * billitem.quantity
+                        stock.quantity -= billitem.quantity
+                        stock.save(update_fields=["quantity", "updated_at"])
+                        billdetailsobj.total += billitem.totalprice
+                        billitem.save()
+
+                    billdetailsobj.save()
+
+                messages.success(request, "Sold items have been registered successfully")
+                return redirect("sale-bill", billno=billobj.billno)
+            except ValidationError:
+                pass  # Rollback triggered; formset now carries per-row errors
         context = {
             "form": form,
             "formset": formset,
