@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
 from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
@@ -306,28 +307,61 @@ class SaleCreateView(View):
         form = SaleForm(request.POST)
         formset = self.build_formset(request, request.POST)
         if form.is_valid() and formset.is_valid():
+            has_errors = False
             with transaction.atomic():
-                billobj = form.save(commit=False)
-                billobj.department = request.user_membership.department
-                billobj.created_by = request.user
-                billobj.save()
+                # Lock all referenced stock rows to prevent concurrent overselling
+                stock_pks = [f.cleaned_data["stock"].pk for f in formset]
+                locked_stocks = {
+                    s.pk: s
+                    for s in department_stocks(request)
+                    .select_for_update()
+                    .filter(pk__in=stock_pks)
+                }
 
-                billdetailsobj = SaleBillDetails.objects.create(billno=billobj)
+                # Verify all stocks exist in this department
+                if set(stock_pks) - set(locked_stocks):
+                    raise Http404("Stock not found in department")
 
+                # Accumulate total demand per stock (same stock may appear in multiple rows)
+                demand = {}
                 for item_form in formset:
-                    billitem = item_form.save(commit=False)
-                    billitem.billno = billobj
-                    stock = get_object_or_404(department_stocks(request), pk=billitem.stock.pk)
-                    billitem.totalprice = billitem.perprice * billitem.quantity
-                    stock.quantity -= billitem.quantity
-                    stock.save(update_fields=["quantity", "updated_at"])
-                    billdetailsobj.total += billitem.totalprice
-                    billitem.save()
+                    pk = item_form.cleaned_data["stock"].pk
+                    demand[pk] = demand.get(pk, 0) + item_form.cleaned_data["quantity"]
 
-                billdetailsobj.save()
+                # Check inventory sufficiency, attach errors to specific rows
+                for item_form in formset:
+                    pk = item_form.cleaned_data["stock"].pk
+                    stock = locked_stocks[pk]
+                    if demand[pk] > stock.quantity:
+                        item_form.add_error(
+                            "quantity",
+                            f"库存不足（当前库存: {stock.quantity}，本单合计需求: {demand[pk]}）",
+                        )
+                        has_errors = True
 
-            messages.success(request, "Sold items have been registered successfully")
-            return redirect("sale-bill", billno=billobj.billno)
+                if not has_errors:
+                    billobj = form.save(commit=False)
+                    billobj.department = request.user_membership.department
+                    billobj.created_by = request.user
+                    billobj.save()
+
+                    billdetailsobj = SaleBillDetails.objects.create(billno=billobj)
+
+                    for item_form in formset:
+                        billitem = item_form.save(commit=False)
+                        billitem.billno = billobj
+                        stock = locked_stocks[billitem.stock.pk]
+                        billitem.totalprice = billitem.perprice * billitem.quantity
+                        stock.quantity -= billitem.quantity
+                        stock.save(update_fields=["quantity", "updated_at"])
+                        billdetailsobj.total += billitem.totalprice
+                        billitem.save()
+
+                    billdetailsobj.save()
+
+            if not has_errors:
+                messages.success(request, "Sold items have been registered successfully")
+                return redirect("sale-bill", billno=billobj.billno)
         context = {
             "form": form,
             "formset": formset,
