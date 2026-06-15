@@ -143,6 +143,103 @@ class MonolithFlowTests(TestCase):
         )
         SaleBillDetails.objects.create(billno=self.south_sale, total=60)
 
+        self.north_sale = SaleBill.objects.create(
+            department=self.north,
+            created_by=self.manager_user,
+            name="North Customer",
+            phone="4444444444",
+            address="North market",
+            email="customer@north.test",
+            gstin="44DDDDD4444D4Z4",
+        )
+        SaleItem.objects.create(
+            billno=self.north_sale,
+            stock=self.north_stock,
+            quantity=2,
+            perprice=15,
+            totalprice=30,
+        )
+        SaleBillDetails.objects.create(billno=self.north_sale, total=30)
+
+    def _valid_bill_post_data(self, total=100):
+        """Return valid POST data for bill detail forms."""
+        return {
+            "eway": "EW123",
+            "veh": "KA01AB1234",
+            "destination": "Bangalore",
+            "po": "PO456",
+            "cgst": "5",
+            "sgst": "5",
+            "igst": "0",
+            "cess": "0",
+            "tcs": "0",
+            "total": str(total),
+        }
+
+    def test_purchase_bill_rejects_negative_total(self):
+        self.client.force_login(self.manager_user)
+        original_total = PurchaseBillDetails.objects.get(billno=self.north_purchase).total
+
+        data = self._valid_bill_post_data(total=-100)
+        response = self.client.post(reverse("purchase-bill", args=[self.north_purchase.billno]), data)
+
+        details = PurchaseBillDetails.objects.get(billno=self.north_purchase)
+        self.assertEqual(details.total, original_total)
+        self.assertEqual(response.status_code, 200)
+
+    def test_purchase_bill_rejects_non_numeric_total(self):
+        self.client.force_login(self.manager_user)
+        original_total = PurchaseBillDetails.objects.get(billno=self.north_purchase).total
+
+        data = self._valid_bill_post_data()
+        data["total"] = "abc"
+        response = self.client.post(reverse("purchase-bill", args=[self.north_purchase.billno]), data)
+
+        details = PurchaseBillDetails.objects.get(billno=self.north_purchase)
+        self.assertEqual(details.total, original_total)
+        self.assertEqual(response.status_code, 200)
+
+    def test_sale_bill_rejects_negative_total(self):
+        self.client.force_login(self.manager_user)
+        original_total = SaleBillDetails.objects.get(billno=self.north_sale).total
+
+        data = self._valid_bill_post_data(total=-50)
+        response = self.client.post(reverse("sale-bill", args=[self.north_sale.billno]), data)
+
+        details = SaleBillDetails.objects.get(billno=self.north_sale)
+        self.assertEqual(details.total, original_total)
+        self.assertEqual(response.status_code, 200)
+
+    def test_sale_bill_rejects_non_numeric_total(self):
+        self.client.force_login(self.manager_user)
+        original_total = SaleBillDetails.objects.get(billno=self.north_sale).total
+
+        data = self._valid_bill_post_data()
+        data["total"] = "not_a_number"
+        response = self.client.post(reverse("sale-bill", args=[self.north_sale.billno]), data)
+
+        details = SaleBillDetails.objects.get(billno=self.north_sale)
+        self.assertEqual(details.total, original_total)
+        self.assertEqual(response.status_code, 200)
+
+    def test_purchase_bill_accepts_valid_total(self):
+        self.client.force_login(self.manager_user)
+
+        data = self._valid_bill_post_data(total=500)
+        self.client.post(reverse("purchase-bill", args=[self.north_purchase.billno]), data)
+
+        details = PurchaseBillDetails.objects.get(billno=self.north_purchase)
+        self.assertEqual(details.total, 500)
+
+    def test_sale_bill_accepts_valid_total(self):
+        self.client.force_login(self.manager_user)
+
+        data = self._valid_bill_post_data(total=200)
+        self.client.post(reverse("sale-bill", args=[self.north_sale.billno]), data)
+
+        details = SaleBillDetails.objects.get(billno=self.north_sale)
+        self.assertEqual(details.total, 200)
+
     def test_role_transition_happy_path_and_illegal_jump(self):
         self.client.force_login(self.admin_user)
 
