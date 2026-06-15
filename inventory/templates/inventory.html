@@ -12,6 +12,7 @@
         <div class="col-md-8">Inventory List</div>
         <div class="col-md-4">
             <div style="float:right;">
+                <a class="btn ghost-button" href="{% url 'inventory-export' %}">Export CSV</a>
                 {% if user_can_manage_catalog %}
                     <a class="btn ghost-blue" href="{% url 'new-stock' %}">Add New Stock</a>
                 {% endif %}
