@@ -208,3 +208,71 @@ class MonolithFlowTests(TestCase):
         self.assertEqual(delete_response.status_code, 302)
         self.north_stock.refresh_from_db()
         self.assertEqual(self.north_stock.quantity, 20)
+
+    def _sale_post_data(self, items, **customer_overrides):
+        """Build POST data for a sale with the given item list of (stock_pk, qty, price)."""
+        data = {
+            "name": "Test Customer",
+            "phone": "9999999999",
+            "address": "Test Address",
+            "email": "test@example.com",
+            "gstin": "99ZZZZZ9999Z9Z9",
+            "form-TOTAL_FORMS": str(len(items)),
+            "form-INITIAL_FORMS": "0",
+            "form-MIN_NUM_FORMS": "0",
+            "form-MAX_NUM_FORMS": "1000",
+        }
+        data.update(customer_overrides)
+        for i, (stock_pk, qty, price) in enumerate(items):
+            data[f"form-{i}-stock"] = str(stock_pk)
+            data[f"form-{i}-quantity"] = str(qty)
+            data[f"form-{i}-perprice"] = str(price)
+        return data
+
+    def test_sale_rejected_when_stock_insufficient(self):
+        """库存不足时销售应被拒绝，库存数量不变，不创建 SaleBill。"""
+        self.client.force_login(self.staff_user)
+        original_qty = self.north_stock.quantity
+        bills_before = SaleBill.objects.count()
+
+        data = self._sale_post_data([(self.north_stock.pk, original_qty + 10, 10)])
+        response = self.client.post(reverse("new-sale"), data)
+
+        self.assertEqual(response.status_code, 200)
+        self.north_stock.refresh_from_db()
+        self.assertEqual(self.north_stock.quantity, original_qty)
+        self.assertEqual(SaleBill.objects.count(), bills_before)
+
+    def test_sale_rejected_all_stock_unchanged_when_one_item_insufficient(self):
+        """多商品销售中某一商品库存不足时，整单拒绝，所有商品库存不变。"""
+        self.client.force_login(self.manager_user)
+        north_stock2 = Stock.objects.create(
+            name="North Nuts", department=self.north, quantity=5, created_by=self.admin_user
+        )
+        original_qty1 = self.north_stock.quantity
+        original_qty2 = north_stock2.quantity
+        bills_before = SaleBill.objects.count()
+
+        # 第一个商品数量合理（2），第二个商品超出库存（5 + 1 = 6 > 5）
+        data = self._sale_post_data([
+            (self.north_stock.pk, 2, 10),
+            (north_stock2.pk, original_qty2 + 1, 15),
+        ])
+        response = self.client.post(reverse("new-sale"), data)
+
+        self.assertEqual(response.status_code, 200)
+        self.north_stock.refresh_from_db()
+        north_stock2.refresh_from_db()
+        self.assertEqual(self.north_stock.quantity, original_qty1)
+        self.assertEqual(north_stock2.quantity, original_qty2)
+        self.assertEqual(SaleBill.objects.count(), bills_before)
+
+    def test_sale_insufficient_stock_error_names_product(self):
+        """库存不足的错误消息应包含具体商品名称。"""
+        self.client.force_login(self.staff_user)
+
+        data = self._sale_post_data([(self.north_stock.pk, self.north_stock.quantity + 1, 10)])
+        response = self.client.post(reverse("new-sale"), data)
+
+        msgs = [str(m) for m in response.context["messages"]]
+        self.assertTrue(any("North Bolts" in m for m in msgs))

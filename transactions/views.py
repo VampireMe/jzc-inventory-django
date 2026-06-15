@@ -306,6 +306,33 @@ class SaleCreateView(View):
         form = SaleForm(request.POST)
         formset = self.build_formset(request, request.POST)
         if form.is_valid() and formset.is_valid():
+            stock_demands = {}
+            for item_form in formset:
+                data = item_form.cleaned_data
+                stock = get_object_or_404(department_stocks(request), pk=data["stock"].pk)
+                if stock.pk not in stock_demands:
+                    stock_demands[stock.pk] = {"stock": stock, "total_qty": 0}
+                stock_demands[stock.pk]["total_qty"] += data["quantity"]
+
+            insufficient = [
+                info["stock"].name
+                for info in stock_demands.values()
+                if info["total_qty"] > info["stock"].quantity
+            ]
+            if insufficient:
+                for name in insufficient:
+                    messages.error(
+                        request,
+                        f"库存不足，无法完成销售：商品「{name}」库存数量不够。",
+                    )
+                context = {
+                    "form": form,
+                    "formset": formset,
+                    "stocks": department_stocks(request),
+                    "current_department": request.user_membership.department,
+                }
+                return render(request, self.template_name, context)
+
             with transaction.atomic():
                 billobj = form.save(commit=False)
                 billobj.department = request.user_membership.department
