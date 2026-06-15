@@ -306,6 +306,27 @@ class SaleCreateView(View):
         form = SaleForm(request.POST)
         formset = self.build_formset(request, request.POST)
         if form.is_valid() and formset.is_valid():
+            # 先检查所有商品的库存是否充足，再决定是否扣减
+            insufficient_items = []
+            for item_form in formset:
+                billitem = item_form.save(commit=False)
+                stock = get_object_or_404(department_stocks(request), pk=billitem.stock.pk)
+                if stock.quantity < billitem.quantity:
+                    insufficient_items.append(
+                        f"{stock.name}（当前库存: {stock.quantity}, 需求: {billitem.quantity}）"
+                    )
+
+            if insufficient_items:
+                msg = "以下商品库存不足，订单已取消：" + "；".join(insufficient_items)
+                messages.error(request, msg)
+                context = {
+                    "form": form,
+                    "formset": formset,
+                    "stocks": department_stocks(request),
+                    "current_department": request.user_membership.department,
+                }
+                return render(request, self.template_name, context)
+
             with transaction.atomic():
                 billobj = form.save(commit=False)
                 billobj.department = request.user_membership.department
